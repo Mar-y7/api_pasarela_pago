@@ -13,51 +13,57 @@ if not ACCESS_TOKEN:
     raise RuntimeError("Falta el MP_ACCESS_TOKEN en el archivo .env")
 sdk = mercadopago.SDK(ACCESS_TOKEN)
 
-router = APIRouter(prefix="/compras", tags=["Compras"])
+router = APIRouter(tags=["Compras"]) #prefix="/compras"
 
 @router.post("/", response_model=schemas.CompraResponse)
 def crear_compra(compra: schemas.CompraCreate):
-    preference_data = {
-        "items": [
-            {
-                "title": compra.producto,
-                "quantity": 1,
-                "unit_price": compra.monto,
-                "description": compra.descripcion,
-                "currency_id": "CLP"
-            }
-        ],
-        "back_urls": {
-            "success": "https://www.ejemplo.cl/success",
-            "failure": "https://www.ejemplo.cl/failure",
-            "pending": "https://www.ejemplo.cl/pending"
-        },
-        "auto_return": "approved"
-    }
+    try:
+        preference_data = {
+            "items": [
+                {
+                    "title": compra.producto,
+                    "quantity": 1,
+                    "unit_price": compra.monto,
+                    "description": compra.descripcion,
+                    "currency_id": "CLP"
+                }
+            ],
+            "back_urls": {
+                "success": "https://www.ejemplo.cl/success",
+                "failure": "https://www.ejemplo.cl/failure",
+                "pending": "https://www.ejemplo.cl/pending"
+            },
+            "auto_return": "approved"
+        }
 
-    preference = sdk.preference().create(preference_data)
-    preference_id = preference["response"].get("id")
+        preference = sdk.preference().create(preference_data)
+        preference_id = preference["response"].get("id")
 
-    if not preference_id:
-        raise HTTPException(status_code=500, detail="Error al generar la preferencia")
+        if not preference_id:
+            raise HTTPException(status_code=500, detail="Error al generar la preferencia")
 
-    # Construir el nuevo objeto
-    nueva_compra = {
-        "producto": compra.producto,
-        "descripcion": compra.descripcion,
-        "monto": compra.monto,
-        "estado": "pendiente",
-        "preference_id": preference_id,
-        "email": compra.email
-    }
+        # Construir el nuevo objeto
+        nueva_compra = {
+            "producto": compra.producto,
+            "descripcion": compra.descripcion,
+            "monto": compra.monto,
+            "estado": "pendiente",
+            "preference_id": preference_id,
+            "email": compra.email
+        }
 
-    # Insertar en Supabase
-    respuesta = supabase.table("compras").insert(nueva_compra).execute()
+        # Insertar en Supabase
+        respuesta = supabase.table("compras").insert(nueva_compra).execute()
 
-    if not respuesta.data:
-        raise HTTPException(status_code=500, detail="No se pudo registrar la compra en Supabase")
+        if not respuesta.data:
+            raise HTTPException(status_code=500, detail="No se pudo registrar la compra en Supabase")
 
-    return respuesta.data[0]
+        return respuesta.data[0]
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")
+
 
 
 @router.get("/{compra_id}", response_model=schemas.CompraResponse)

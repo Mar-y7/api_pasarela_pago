@@ -1,0 +1,15 @@
+### Crear una compra (POST)
+POST http://localhost:8000/compras/
+Content-Type: application/json
+
+{
+  "producto": "Silla de madera",
+  "descripcion": "Silla reciclada hecha a mano",
+  "monto": 50000,
+  "email": "cliente@ejemplo.com"
+}
+
+###
+
+### Obtener una compra por ID (GET)
+GET http://localhost:8000/compras/1
