@@ -1,11 +1,11 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from typing import Optional
 
 class CompraBase(BaseModel):
     producto: str
     descripcion: Optional[str]
     monto: float
-    email: str
+    email: EmailStr  
 
 class CompraCreate(CompraBase):
     pass
